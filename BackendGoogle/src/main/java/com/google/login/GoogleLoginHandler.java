@@ -22,8 +22,11 @@ public class GoogleLoginHandler {
     }
 
     @GetMapping("/callback")
-    public ResponseEntity<GoogleCallbackResponse> callback(@RequestParam("code") String code) throws Exception {
-
+    public ResponseEntity<?> callback(
+            @RequestParam("code") String code,
+            @RequestParam(value = "redirect", defaultValue = "true") boolean redirect
+    ) throws Exception {
+        
         GoogleTokenResponse tokenResponse =
                 new GoogleAuthorizationCodeTokenRequest(
                         new NetHttpTransport(),
@@ -77,13 +80,20 @@ public class GoogleLoginHandler {
                 emailVerified
         );
 
-        String frontendUrl = "https://integraupt.netlify.app/login?googleSuccess=true" +
-            "&email=" + java.net.URLEncoder.encode(email, "UTF-8") +
-            "&fullName=" + java.net.URLEncoder.encode(fullName != null ? fullName : "", "UTF-8") +
-            "&picture=" + java.net.URLEncoder.encode(picture != null ? picture : "", "UTF-8");
+        GoogleCallbackResponse responseBody = new GoogleCallbackResponse(true, "Autenticación con Google exitosa", profile);
+
+        if (!redirect) {
+            return ResponseEntity.ok(responseBody);
+        }
+
+        String frontendUrl = config.frontendLoginUrl + "?googleSuccess=true"
+                + "&email=" + java.net.URLEncoder.encode(email, "UTF-8")
+                + "&name=" + java.net.URLEncoder.encode(fullName != null ? fullName : "", "UTF-8")
+                + "&avatar=" + java.net.URLEncoder.encode(picture != null ? picture : "", "UTF-8")
+                + "&domain=" + java.net.URLEncoder.encode(hostedDomain != null ? hostedDomain : "", "UTF-8");
 
         return ResponseEntity.status(HttpStatus.FOUND)
-            .header("Location", frontendUrl)
-            .build();
+                .header("Location", frontendUrl)
+                .body(responseBody);
     }
 }

@@ -17,5 +17,8 @@ public class GoogleConfig {
     
     @Value("${google.academic-domain}")
     public String academicDomain;
+
+    @Value("${frontend.login-url}")
+    public String frontendLoginUrl;
 }
     
